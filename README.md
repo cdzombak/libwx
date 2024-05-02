@@ -107,10 +107,18 @@ When making repeated comparisons with the same tolerance, having to pass the tol
 For example:
 
 ```go
-equalityChecker := CurriedFloat64Equal(Tolerance1)
+package main
 
-equalityChecker(1.0, 1.1) // => false
-equalityChecker(1.0, 1.01) // => true
+import (
+	wx "github.com/cdzombak/libwx"
+)
+
+function main() {
+	equalityChecker := wx.CurriedFloat64Equal(Tolerance1)
+
+	equalityChecker(1.0, 1.1) // => false
+	equalityChecker(1.0, 1.01) // => true
+}
 ```
 
 ## License
