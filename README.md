@@ -81,13 +81,13 @@ Finally, `libwx` provides some utility functions for comparing `float64` and `in
 - [`Float64Compare(a, b, tolerance float64) int`](https://pkg.go.dev/github.com/cdzombak/libwx#Float64Compare)
 - [`Float64Equal(a, b, tolerance float64) bool`](https://pkg.go.dev/github.com/cdzombak/libwx#Float64Equal)
 
-The `*Compare(…)` functions return
+The `*Compare(…)` functions return:
 
 - `-1` if `a < b`
 - `0` if `a == b`
 - `1` if `a > b`
 
-For `float64` comparisons functions that accept a `tolerance`, the convenience tolerance [constants](https://pkg.go.dev/github.com/cdzombak/libwx#pkg-constants) are provided:
+For `float64` comparisons functions that accept a `tolerance`, convenience tolerance [constants](https://pkg.go.dev/github.com/cdzombak/libwx#pkg-constants) are provided:
 
 ```go
 ToleranceExact = float64(0.0)
