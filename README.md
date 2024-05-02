@@ -1,12 +1,14 @@
 # `github.com/cdzombak/libwx`
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/cdzombak/libwx.svg)](https://pkg.go.dev/github.com/cdzombak/libwx)
+
 This package primarily provides some weather/atmospheric-related calculations. It also provides types for these calculations to traffic, helping to reduce the chance of mixing up units.
 
 For example, these types prevent accidentally using a Celsius temperature as a Fahrenheit temperature:
 
 ![Custom types allow your IDE/build to prevent accidental unit confusion.](_readme/types-prevent-unit-confusion.png)
 
-**Documentation:** [pkg.go.dev/github.com/cdzombak/macs](https://pkg.go.dev/github.com/cdzombak/libwx)
+**Documentation:** [pkg.go.dev/github.com/cdzombak/libwx](https://pkg.go.dev/github.com/cdzombak/libwx)
 
 ## Installation
 
