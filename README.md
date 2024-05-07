@@ -118,7 +118,7 @@ import (
 function main() {
 	equalityChecker := wx.CurriedFloat64Equal(Tolerance1)
 
-	equalityChecker(1.0, 1.1) // => false
+	equalityChecker(1.0, 1.11) // => false
 	equalityChecker(1.0, 1.01) // => true
 }
 ```
