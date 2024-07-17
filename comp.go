@@ -3,9 +3,10 @@ package libwx
 const (
 	ToleranceExact = float64(0.0)
 	Tolerance0     = float64(1.0)
-	Tolerace1      = float64(0.1)
+	Tolerance1     = float64(0.1)
 	Tolerance01    = float64(0.01)
 	Tolerance001   = float64(0.001)
+	Tolerace1      = Tolerance1 // deprecated; wasa a typo in a previous release
 )
 
 func Float64Compare(a, b, tolerance float64) int {
