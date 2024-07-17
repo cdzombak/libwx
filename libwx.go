@@ -5,7 +5,12 @@ package libwx
 //
 // Also included are some simple type definitions to help avoid erroneously mixing units.
 
-import "math"
+import (
+	"errors"
+	"math"
+)
+
+var ErrInputRange = errors.New("one or more input values are outside the calculation's supported range")
 
 // DewPointF calculates the dew point given the current temperature (in Fahrenheit)
 // and relative humidity percentage (an integer 0-100, *not* a float 0.0-1.0).
@@ -26,9 +31,9 @@ func DewPointC(t TempC, rh RelHumidity) TempC {
 }
 
 // WindChillF calculates the wind chill for the given temperature (in Fahrenheit)
-// and wind speed (in miles/hour). If wind speed is less than 3 mph, or temperature
-// if over 50 degrees, the given temperature is returned - the formula works
-// below 50 degrees and above 3 mph.
+// and wind speed (in miles/hour).
+// If wind speed is less than 3 mph, or temperature is over 50 degrees F, the
+// given temperature is returned - the formula works below 50 degrees F and above 3 mph.
 func WindChillF(t TempF, windSpeed SpeedMph) TempF {
 	if t > 50.0 || windSpeed < 3.0 {
 		return t
@@ -36,12 +41,32 @@ func WindChillF(t TempF, windSpeed SpeedMph) TempF {
 	return TempF(35.74 + (0.6215 * float64(t)) - (35.75 * math.Pow(windSpeed.Unwrap(), 0.16)) + (0.4275 * float64(t) * math.Pow(windSpeed.Unwrap(), 0.16)))
 }
 
+// WindChillFWithValidation calculates the wind chill for the given temperature (in Fahrenheit)
+// and wind speed (in miles/hour).
+// If wind speed or temperature are outside the supported range, ErrInputRange is returned.
+func WindChillFWithValidation(t TempF, windSpeed SpeedMph) (TempF, error) {
+	if t > 50.0 || windSpeed < 3.0 {
+		return t, ErrInputRange
+	}
+	return WindChillF(t, windSpeed), nil
+}
+
 // WindChillC calculates the wind chill for the given temperature (in Celsius)
-// and wind speed (in miles/hour). If wind speed is less than 3 mph, or temperature
-// if over 50 degrees, the given temperature is returned - the formula works
-// below 50 degrees and above 3 mph.
+// and wind speed (in miles/hour).
+// If wind speed is less than 3 mph, or temperature is over 10 degrees C, the
+// given temperature is returned - the formula works below 10 degrees C and above 3 mph.
 func WindChillC(temp TempC, windSpeed SpeedMph) TempC {
 	return WindChillF(temp.F(), windSpeed).C()
+}
+
+// WindChillCWithValidation calculates the wind chill for the given temperature (in Celsius)
+// and wind speed (in miles/hour).
+// If wind speed or temperature are outside the supported range, ErrInputRange is returned.
+func WindChillCWithValidation(temp TempC, windSpeed SpeedMph) (TempC, error) {
+	if temp.F() > 50.0 || windSpeed < 3.0 {
+		return temp, ErrInputRange
+	}
+	return WindChillF(temp.F(), windSpeed).C(), nil
 }
 
 // IndoorHumidityRecommendationF returns the maximum recommended indoor relative
