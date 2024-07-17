@@ -20,7 +20,7 @@ go get github.com/cdzombak/libwx
 
 ### Dew point calculation
 
-[`DewPointF()`](https://pkg.go.dev/github.com/cdzombak/libwx#DewPointF) and [`DewPointC()`](https://pkg.go.dev/github.com/cdzombak/libwx#DewPointC) calculate the dew point given a temperature and relative humidity.
+[`DewPointF()`](https://pkg.go.dev/github.com/cdzombak/libwx#DewPointF) and [`DewPointC()`](https://pkg.go.dev/github.com/cdzombak/libwx#DewPointC) calculate the dew point, given a temperature and relative humidity.
 
 ### Indoor humidity recommendation
 
@@ -28,7 +28,33 @@ go get github.com/cdzombak/libwx
 
 ### Wind chill calculation
 
-[`WindChillF()`](https://pkg.go.dev/github.com/cdzombak/libwx#WindChillF) and [`WindChillC()`](https://pkg.go.dev/github.com/cdzombak/libwx#WindChillC) calculate the wind chill given the outdoor temperature and wind speed.
+[`WindChillF()`](https://pkg.go.dev/github.com/cdzombak/libwx#WindChillF) and [`WindChillC()`](https://pkg.go.dev/github.com/cdzombak/libwx#WindChillC) calculate the wind chill, given the outdoor temperature and wind speed.
+
+The wind chill formula works given temperatures less than 50ºF and wind speeds greater than 3 mph. To calculate wind chill but return an error if the input is outside this range, use [`WindChillFWithValidation()`](https://pkg.go.dev/github.com/cdzombak/libwx#WindChillFWithValidation) and [`WindChillCWithValidation()`](https://pkg.go.dev/github.com/cdzombak/libwx#WindChillCWithValidation). These functions return [`ErrInputRange`](https://pkg.go.dev/github.com/cdzombak/libwx#ErrInputRange) if the input is out of the formula's input range.
+
+### Wet bulb temperature calculation
+
+[`WetBulbF()`](https://pkg.go.dev/github.com/cdzombak/libwx#WetBulbF) and [`WetBulbC()`](https://pkg.go.dev/github.com/cdzombak/libwx#WetBulbC) calculate the [wet bulb temperature](https://en.wikipedia.org/wiki/Wet-bulb_temperature), given the dry bulb temperature and relative humidity.
+
+This formula is taken from ["Wet-Bulb Temperature from Relative Humidity and Air Temperature" (Roland Stull, Journal of Applied Meteorology and Climatology, 2011)](https://journals.ametsoc.org/view/journals/apme/50/11/jamc-d-11-0143.1.xml) and assumes standard sea level pressure.
+
+These functions return [`ErrInputRange`](https://pkg.go.dev/github.com/cdzombak/libwx#ErrInputRange) if the input is out of the formula's input range.
+
+### Heat index calculation
+
+[`HeatIndexF()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexF) and [`HeatIndexC()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexC) calculate the [heat index](https://en.wikipedia.org/wiki/Heat_index), given a temperature and relative humidity.
+
+#### Heat index warning levels
+
+[`HeatIndexWarningF()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexWarningF) and [`HeatIndexWarningC()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexWarningC) provide a warning level based on the heat index. These warning levels are based on the NOAA's heat index table:
+
+```go
+HeatIndexWarningNone
+HeatIndexWarningCaution
+HeatIndexWarningExtremeCaution
+HeatIndexWarningDanger
+HeatIndexWarningExtremeDanger
+```
 
 ### Distance types & conversions
 
@@ -45,7 +71,7 @@ Each type provides methods to convert to the other types (e.g. [`NauticalMile.Me
 
 The [`RelHumidity`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity) type is an integer type representing a relative humidity percentage from `0-100`, inclusive. A clamping [method](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity.Clamped) and [function](https://pkg.go.dev/github.com/cdzombak/libwx#ClampedRelHumidity) for this range are provided.
 
-An [`Unwrap()`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity.Unwrap) method also exists to get the raw value as an `int`.
+An [`Unwrap()`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity.Unwrap) method also exists to get the raw value as an `int`; [`UnwrapFloat64()`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity.UnwrapFloat64) returns the value as a `float64`.
 
 ### Pressure types and conversions
 
