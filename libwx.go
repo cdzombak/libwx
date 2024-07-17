@@ -101,3 +101,50 @@ func IndoorHumidityRecommendationF(outdoorT TempF) RelHumidity {
 func IndoorHumidityRecommendationC(outdoorT TempC) RelHumidity {
 	return IndoorHumidityRecommendationF(outdoorT.F())
 }
+
+// WetBulbF calculates the wet bulb temperature (in Fahrenheit) given a dry bulb
+// temperature (in Fahrenheit) and relative humidity percentage.
+// If the given temperature or relative humidity are outside the supported range,
+// ErrInputRange is returned.
+// See: https://journals.ametsoc.org/view/journals/apme/50/11/jamc-d-11-0143.1.xml
+func WetBulbF(temp TempF, rh RelHumidity) (TempF, error) {
+	result, err := WetBulbC(temp.C(), rh)
+	return result.F(), err
+}
+
+// WetBulbC calculates the wet bulb temperature (in Celsius) given a dry bulb
+// temperature (in Celsius) and relative humidity percentage.
+// If the given temperature or relative humidity are outside the supported range,
+// ErrInputRange is returned.
+// See: https://journals.ametsoc.org/view/journals/apme/50/11/jamc-d-11-0143.1.xml
+func WetBulbC(temp TempC, rh RelHumidity) (TempC, error) {
+	rh = rh.Clamped()
+	if rh.Unwrap() < 5 || rh.Unwrap() > 99 {
+		return temp, ErrInputRange
+	}
+	if temp.Unwrap() < -20 || temp.Unwrap() > 50 {
+		return temp, ErrInputRange
+	}
+	// formula for the left validity border line:
+	// y = -1*(75-5)/(20+9.25) * x + 25
+	// where y == RH% and x == dry bulb degC
+	// see full-jamc-d-11-0143.1-f3-annotated.jpg in this repo, taken from
+	// https://journals.ametsoc.org/view/journals/apme/50/11/jamc-d-11-0143.1.xml
+	// and annotated
+	y := -1*(75-5)/(20+9.25)*temp.Unwrap() + 25
+	if y > rh.UnwrapFloat64() {
+		return temp, ErrInputRange
+	}
+
+	// Tw = T*atan[0.151977(RH% + 8.313659)**1/2] + atan(T + RH%) - atan(RH% - 1.676331)
+	// + 0.00391838(RH%)**3/2 * atan(0.023101*RH%) - 4.686035
+	// taken from figure 1 of https://journals.ametsoc.org/view/journals/apme/50/11/jamc-d-11-0143.1.xml
+	return TempC(
+			temp.Unwrap()*math.Atan(0.151977*math.Pow(rh.UnwrapFloat64()+8.313659, 0.5)) +
+				math.Atan(temp.Unwrap()+rh.UnwrapFloat64()) -
+				math.Atan(rh.UnwrapFloat64()-1.676331) +
+				0.00391838*math.Pow(rh.UnwrapFloat64(), 1.5)*math.Atan(0.023101*rh.UnwrapFloat64()) -
+				4.686035,
+		),
+		nil
+}
