@@ -148,3 +148,111 @@ func WetBulbC(temp TempC, rh RelHumidity) (TempC, error) {
 		),
 		nil
 }
+
+func heatIndexConstantsF() [9]float64 {
+	// from https://en.wikipedia.org/wiki/Heat_index#Formula
+	// captured on 2024-07-17
+	return [9]float64{
+		-42.379,
+		2.04901523,
+		10.14333127,
+		-0.22475541,
+		-6.83783e-3,
+		-5.481717e-2,
+		1.22874e-3,
+		8.5282e-4,
+		-1.99e-6,
+	}
+}
+
+func heatIndexConstantsC() [9]float64 {
+	// from https://en.wikipedia.org/wiki/Heat_index#Formula
+	// captured on 2024-07-17
+	return [9]float64{
+		-8.78469475556,
+		1.61139411,
+		2.33854883889,
+		-0.14611605,
+		-0.012308094,
+		-0.0164248277778,
+		2.211732e-3,
+		7.2546e-4,
+		-3.582e-6,
+	}
+}
+
+func rawHeatIndex(c [9]float64, rawTemp, rawRelH float64) float64 {
+	// from https://en.wikipedia.org/wiki/Heat_index#Formula
+	// captured on 2024-07-17
+	// note that constants on that page are 1-indexed, while the constants
+	// array here is 0-indexed
+	return c[0] +
+		c[1]*rawTemp +
+		c[2]*rawRelH +
+		c[3]*rawTemp*rawRelH +
+		c[4]*math.Pow(rawTemp, 2) +
+		c[5]*math.Pow(rawRelH, 2) +
+		c[6]*math.Pow(rawTemp, 2)*rawRelH +
+		c[7]*rawTemp*math.Pow(rawRelH, 2) +
+		c[8]*math.Pow(rawTemp, 2)*math.Pow(rawRelH, 2)
+}
+
+// HeatIndexF calculates the heat index for the given temperature (in Fahrenheit)
+// and relative humidity percentage.
+func HeatIndexF(temp TempF, rh RelHumidity) TempF {
+	return TempF(rawHeatIndex(
+		heatIndexConstantsF(),
+		temp.Unwrap(),
+		rh.Clamped().UnwrapFloat64(),
+	))
+}
+
+// HeatIndexC calculates the heat index for the given temperature (in Celsius)
+// and relative humidity percentage.
+func HeatIndexC(temp TempC, rh RelHumidity) TempC {
+	return TempC(rawHeatIndex(
+		heatIndexConstantsC(),
+		temp.Unwrap(),
+		rh.Clamped().UnwrapFloat64(),
+	))
+}
+
+// HeatIndexWarningF returns a heat index warning level for the
+// given heat index temperature (in Fahrenheit) per
+// https://en.wikipedia.org/wiki/Heat_index#Table_of_values
+// captured on 2024-07-17.
+func HeatIndexWarningF(heatIndex TempF) HeatIndexWarning {
+	if heatIndex.Unwrap() < 80 {
+		return HeatIndexWarningNone
+	}
+	if heatIndex.Unwrap() < 91 {
+		return HeatIndexWarningCaution
+	}
+	if heatIndex.Unwrap() < 104 {
+		return HeatIndexWarningExtremeCaution
+	}
+	if heatIndex.Unwrap() < 125 {
+		return HeatIndexWarningDanger
+	}
+	return HeatIndexWarningExtremeDanger
+}
+
+// HeatIndexWarningC returns a heat index warning level for the
+// given heat index temperature (in Celsius) per
+// https://en.wikipedia.org/wiki/Heat_index#Table_of_values
+// captured on 2024-07-17.
+func HeatIndexWarningC(heatIndex TempC) HeatIndexWarning {
+	if heatIndex.Unwrap() < 27 {
+		return HeatIndexWarningNone
+	}
+	if heatIndex.Unwrap() < 33 {
+		return HeatIndexWarningCaution
+	}
+	if heatIndex.Unwrap() < 40 {
+		return HeatIndexWarningExtremeCaution
+	}
+	if heatIndex.Unwrap() < 52 {
+		return HeatIndexWarningDanger
+	}
+	return HeatIndexWarningExtremeDanger
+}
