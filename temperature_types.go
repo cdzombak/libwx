@@ -18,7 +18,7 @@ const (
 	HeatIndexWarningCaution
 	// HeatIndexWarningExtremeCaution indicates heat cramps and heat exhaustion are possible. Continuing activity could result in heat stroke.
 	HeatIndexWarningExtremeCaution
-	// HeatIndexWarningDangerindicates heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.
+	// HeatIndexWarningDanger indicates heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.
 	HeatIndexWarningDanger
 	// HeatIndexWarningExtremeDanger indicates heat stroke is imminent.
 	HeatIndexWarningExtremeDanger

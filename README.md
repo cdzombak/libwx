@@ -48,13 +48,11 @@ These functions return [`ErrInputRange`](https://pkg.go.dev/github.com/cdzombak/
 
 [`HeatIndexWarningF()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexWarningF) and [`HeatIndexWarningC()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexWarningC) provide a warning level based on the heat index. These warning levels are based on the NOAA's heat index table:
 
-```go
-HeatIndexWarningNone
-HeatIndexWarningCaution
-HeatIndexWarningExtremeCaution
-HeatIndexWarningDanger
-HeatIndexWarningExtremeDanger
-```
+- `HeatIndexWarningNone` indicates the heat index does not warrant elevated caution.
+- `HeatIndexWarningCaution` indicates fatigue is possible with prolonged exposure and activity. Continuing activity could result in heat cramps.
+- `HeatIndexWarningExtremeCaution` indicates heat cramps and heat exhaustion are possible. Continuing activity could result in heat stroke.
+- `HeatIndexWarningDanger` indicates heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.
+- `HeatIndexWarningExtremeDanger` indicates heat stroke is imminent.
 
 ### Distance types & conversions
 
