@@ -120,7 +120,7 @@ For `float64` comparisons functions that accept a `tolerance`, convenience toler
 ```go
 ToleranceExact = float64(0.0)
 Tolerance0     = float64(1.0)
-Tolerance1      = float64(0.1)
+Tolerance1     = float64(0.1)
 Tolerance01    = float64(0.01)
 Tolerance001   = float64(0.001)
 ```
