@@ -42,7 +42,7 @@ These functions return [`ErrInputRange`](https://pkg.go.dev/github.com/cdzombak/
 
 ### Heat index calculation
 
-[`HeatIndexF()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexF) and [`HeatIndexC()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexC) calculate the [heat index](https://en.wikipedia.org/wiki/Heat_index), given a temperature and relative humidity.
+[`HeatIndexFWithValidation()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexFWithValidation) and [`HeatIndexCWithValidation()`](https://pkg.go.dev/github.com/cdzombak/libwx#HeatIndexCWithValidation) calculate the [heat index](https://en.wikipedia.org/wiki/Heat_index), given a temperature and relative humidity.
 
 #### Heat index warning levels
 

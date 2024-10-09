@@ -186,6 +186,7 @@ func rawHeatIndex(c [9]float64, rawTemp, rawRelH float64) float64 {
 	// captured on 2024-07-17
 	// note that constants on that page are 1-indexed, while the constants
 	// array here is 0-indexed
+	// see also: https://www.weather.gov/media/ffc/ta_htindx.PDF
 	return c[0] +
 		c[1]*rawTemp +
 		c[2]*rawRelH +
@@ -197,24 +198,44 @@ func rawHeatIndex(c [9]float64, rawTemp, rawRelH float64) float64 {
 		c[8]*math.Pow(rawTemp, 2)*math.Pow(rawRelH, 2)
 }
 
-// HeatIndexF calculates the heat index for the given temperature (in Fahrenheit)
-// and relative humidity percentage.
+// HeatIndexF is deprecated; use HeatIndexFWithValidation
 func HeatIndexF(temp TempF, rh RelHumidity) TempF {
+	retv, _ := HeatIndexFWithValidation(temp, rh)
+	return retv
+}
+
+// HeatIndexC is deprecated; use HeatIndexCWithValidation
+func HeatIndexC(temp TempC, rh RelHumidity) TempC {
+	retv, _ := HeatIndexCWithValidation(temp, rh)
+	return retv
+}
+
+// HeatIndexFWithValidation calculates the heat index for the given temperature (in Fahrenheit)
+// and relative humidity percentage.
+func HeatIndexFWithValidation(temp TempF, rh RelHumidity) (TempF, error) {
+	var err error
+	if temp < TempC(25).F() {
+		err = ErrInputRange
+	}
 	return TempF(rawHeatIndex(
 		heatIndexConstantsF(),
 		temp.Unwrap(),
 		rh.Clamped().UnwrapFloat64(),
-	))
+	)), err
 }
 
-// HeatIndexC calculates the heat index for the given temperature (in Celsius)
+// HeatIndexCWithValidation calculates the heat index for the given temperature (in Celsius)
 // and relative humidity percentage.
-func HeatIndexC(temp TempC, rh RelHumidity) TempC {
+func HeatIndexCWithValidation(temp TempC, rh RelHumidity) (TempC, error) {
+	var err error
+	if temp < TempC(25) {
+		err = ErrInputRange
+	}
 	return TempC(rawHeatIndex(
 		heatIndexConstantsC(),
 		temp.Unwrap(),
 		rh.Clamped().UnwrapFloat64(),
-	))
+	)), err
 }
 
 // HeatIndexWarningF returns a heat index warning level for the
