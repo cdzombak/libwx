@@ -54,6 +54,18 @@ These functions return [`ErrInputRange`](https://pkg.go.dev/github.com/cdzombak/
 - `HeatIndexWarningDanger` indicates heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.
 - `HeatIndexWarningExtremeDanger` indicates heat stroke is imminent.
 
+### Direction statistical calculations
+
+Three functions are provided that perform circular statistics on a slice of [`Degree`](https://pkg.go.dev/github.com/cdzombak/libwx#Degree) values:
+
+- [`AvgDirectionDeg`](https://pkg.go.dev/github.com/cdzombak/libwx#AvgDirectionDeg) calculates the circular mean of the given set of angles (in degrees).
+- [`WeightedAvgDirectionDeg`](https://pkg.go.dev/github.com/cdzombak/libwx#WeightedAvgDirectionDeg) calculates the weighted circular mean of the given set of angles (in degrees).
+- [`StdDevDeg`](https://pkg.go.dev/github.com/cdzombak/libwx#StdDevDeg) calculates the circular standard deviation of the given set of angles (in degrees).
+
+These can be used to calculate the average and standard deviation of a set of wind directions, for example.
+
+Note that [variance](https://en.wikipedia.org/wiki/Variance) `== (standard deviation)^2`, but standard deviation of a dataset is in the dataset's units (degrees, in this case). Variance of this dataset would have the unit `degrees^2`.
+
 ### Compass direction to cardinal direction string
 
 [`DirectionStr`](https://pkg.go.dev/github.com/cdzombak/libwx#DirectionStr) returns a string representation of the given compass direction (in degrees).

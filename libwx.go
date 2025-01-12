@@ -8,9 +8,12 @@ package libwx
 import (
 	"errors"
 	"math"
+
+	"gonum.org/v1/gonum/stat"
 )
 
 var ErrInputRange = errors.New("one or more input values are outside the calculation's supported range")
+var ErrMismatchedInputLength = errors.New("input slices must be the same length")
 
 // DewPointF calculates the dew point given the current temperature (in Fahrenheit)
 // and relative humidity percentage (an integer 0-100, *not* a float 0.0-1.0).
@@ -276,4 +279,25 @@ func HeatIndexWarningC(heatIndex TempC) HeatIndexWarning {
 		return HeatIndexWarningDanger
 	}
 	return HeatIndexWarningExtremeDanger
+}
+
+// AvgDirectionDeg calculates the circular mean of the given set of angles (in degrees).
+// This is useful to find e.g. the average wind direction.
+func AvgDirectionDeg(degrees []Degree) Degree {
+	return radToDeg(stat.CircularMean(degToRadSlice(clampedDegSlice(degrees)), nil))
+}
+
+// WeightedAvgDirectionDeg calculates the weighted circular mean of the given set of angles (in degrees).
+// This is useful to find e.g. the average wind direction, weighted by wind speed.
+func WeightedAvgDirectionDeg(degrees []Degree, weights []float64) (Degree, error) {
+	if len(degrees) != len(weights) {
+		return 0.0, ErrMismatchedInputLength
+	}
+	return radToDeg(stat.CircularMean(degToRadSlice(clampedDegSlice(degrees)), weights)), nil
+}
+
+// StdDevDeg calculates the circular standard deviation of the given set of angles (in degrees).
+// This is useful to find e.g. the variability of wind direction.
+func StdDevDeg(degrees []Degree) Degree {
+	return radToDeg(stat.CircularStdDev(degToRadSlice(clampedDegSlice(degrees))))
 }
