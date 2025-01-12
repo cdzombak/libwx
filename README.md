@@ -54,6 +54,10 @@ These functions return [`ErrInputRange`](https://pkg.go.dev/github.com/cdzombak/
 - `HeatIndexWarningDanger` indicates heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.
 - `HeatIndexWarningExtremeDanger` indicates heat stroke is imminent.
 
+### Compass direction to cardinal direction string
+
+[`DirectionStr`](https://pkg.go.dev/github.com/cdzombak/libwx#DirectionStr) returns a string representation of the given compass direction (in degrees).
+
 ### Distance types & conversions
 
 The following distance types are provided:
@@ -98,6 +102,12 @@ The following temperature types are provided:
 - [`TempC`](https://pkg.go.dev/github.com/cdzombak/libwx#TempC) (Celsius)
 
 Each type provides methods to convert to the other type (e.g. [`TempF.C()`](https://pkg.go.dev/github.com/cdzombak/libwx#TempF.C)). An [`Unwrap()`](https://pkg.go.dev/github.com/cdzombak/libwx#TempF.Unwrap) method also exists to get the raw value as a `float64`.
+
+### Direction types
+
+The following direction type is provided:
+
+- [`Degree`](https://pkg.go.dev/github.com/cdzombak/libwx#Degree) (angular degrees)
 
 ### Utilities: Comparisons
 
