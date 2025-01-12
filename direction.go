@@ -30,17 +30,17 @@ func DirectionStr(deg Degree, precision DirectionStrPrecision) string {
 }
 
 // ClampedDegree returns a Degree from the given value, guaranteed
-// to be within 0 <= d < 360.
+// to be within 0 < d <= 360.
 func ClampedDegree(d float64) Degree {
 	return Degree(d).Clamped()
 }
 
-// Clamped returns an angular direction in degrees guaranteed to be within 0 <= d < 360.
+// Clamped returns an angular direction in degrees guaranteed to be within 0 < d <= 360.
 func (d Degree) Clamped() Degree {
-	for d < 0 {
+	for d <= 0 {
 		d += 360
 	}
-	for d >= 360 {
+	for d > 360 {
 		d -= 360
 	}
 	return d
