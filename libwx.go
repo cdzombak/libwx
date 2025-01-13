@@ -294,8 +294,17 @@ func WeightedAvgDirectionDeg(degrees []Degree, weights []float64) (Degree, error
 	return radToDeg(circularMean(degToRadSlice(clampedDegSlice(degrees)), weights)), nil
 }
 
-// StdDevDeg calculates the circular standard deviation of the given set of angles (in degrees).
+// StdDevDirectionDeg calculates the circular standard deviation of the given set of angles (in degrees).
 // This is useful to find e.g. the variability of wind direction.
-func StdDevDeg(degrees []Degree) Degree {
-	return radToDeg(circularStdDev(degToRadSlice(clampedDegSlice(degrees))))
+func StdDevDirectionDeg(degrees []Degree) Degree {
+	return radToDeg(circularStdDev(degToRadSlice(clampedDegSlice(degrees)), nil))
+}
+
+// WeightedStdDevDirectionDeg calculates the circular standard deviation of the given set of angles (in degrees).
+// This is useful to find e.g. the variability of wind direction, weighted by wind speed.
+func WeightedStdDevDirectionDeg(degrees []Degree, weights []float64) (Degree, error) {
+	if len(degrees) != len(weights) {
+		return 0.0, ErrMismatchedInputLength
+	}
+	return radToDeg(circularStdDev(degToRadSlice(clampedDegSlice(degrees)), weights)), nil
 }
