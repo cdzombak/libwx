@@ -60,7 +60,8 @@ Three functions are provided that perform circular statistics on a slice of [`De
 
 - [`AvgDirectionDeg`](https://pkg.go.dev/github.com/cdzombak/libwx#AvgDirectionDeg) calculates the circular mean of the given set of angles (in degrees).
 - [`WeightedAvgDirectionDeg`](https://pkg.go.dev/github.com/cdzombak/libwx#WeightedAvgDirectionDeg) calculates the weighted circular mean of the given set of angles (in degrees).
-- [`StdDevDeg`](https://pkg.go.dev/github.com/cdzombak/libwx#StdDevDeg) calculates the circular standard deviation of the given set of angles (in degrees).
+- [`StdDevDirectionDeg`](https://pkg.go.dev/github.com/cdzombak/libwx#StdDevDirectionDeg) calculates the circular standard deviation of the given set of angles (in degrees).
+- [`WeightedStdDevDirectionDeg`](https://pkg.go.dev/github.com/cdzombak/libwx#WeightedStdDevDirectionDeg) calculates the weighted circular standard deviation of the given set of angles (in degrees).
 
 These can be used to calculate the average and standard deviation of a set of wind directions, for example.
 
