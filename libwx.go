@@ -282,7 +282,7 @@ func HeatIndexWarningC(heatIndex TempC) HeatIndexWarning {
 // AvgDirectionDeg calculates the circular mean of the given set of angles (in degrees).
 // This is useful to find e.g. the average wind direction.
 func AvgDirectionDeg(degrees []Degree) Degree {
-	return radToDeg(circularMean(degToRadSlice(clampedDegSlice(degrees)), nil))
+	return radToDeg(circularMean(degToRadSlice(clampedDegSlice(degrees)), nil)).Clamped()
 }
 
 // WeightedAvgDirectionDeg calculates the weighted circular mean of the given set of angles (in degrees).
@@ -291,7 +291,7 @@ func WeightedAvgDirectionDeg(degrees []Degree, weights []float64) (Degree, error
 	if len(degrees) != len(weights) {
 		return 0.0, ErrMismatchedInputLength
 	}
-	return radToDeg(circularMean(degToRadSlice(clampedDegSlice(degrees)), weights)), nil
+	return radToDeg(circularMean(degToRadSlice(clampedDegSlice(degrees)), weights)).Clamped(), nil
 }
 
 // StdDevDirectionDeg calculates the circular standard deviation of the given set of angles (in degrees).
