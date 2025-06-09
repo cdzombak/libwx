@@ -309,7 +309,6 @@ func WeightedStdDevDirectionDeg(degrees []Degree, weights []float64) (Degree, er
 	return radToDeg(circularStdDev(degToRadSlice(clampedDegSlice(degrees)), weights)), nil
 }
 
-
 func saturationVaporPressureC(temp TempC) float64 {
 	if temp.Unwrap() < -20 || temp.Unwrap() > 100 {
 		return 0
@@ -325,12 +324,10 @@ func saturationVaporPressureC(temp TempC) float64 {
 
 func AbsHumidityFromRelF(temp TempF, rh RelHumidity) AbsHumidity {
 	return AbsHumidityFromRelC(temp.C(), rh)
-
 }
 
 func AbsHumidityFromRelC(temp TempC, rh RelHumidity) AbsHumidity {
 	rh = rh.Clamped()
-
 
 	pSat := saturationVaporPressureC(temp)
 	if pSat == 0 {
@@ -349,12 +346,10 @@ func RelHumidityFromAbsF(temp TempF, ah AbsHumidity) RelHumidity {
 	return RelHumidityFromAbsC(temp.C(), ah)
 }
 
-
 func RelHumidityFromAbsC(temp TempC, ah AbsHumidity) RelHumidity {
 	ah = ah.Clamped()
 
 	pSat := saturationVaporPressureC(temp)
-
 	if pSat == 0 {
 		return 0
 	}
