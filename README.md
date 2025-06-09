@@ -90,7 +90,7 @@ An [`Unwrap()`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity.Unwrap)
 
 ### Absolute humidity type and conversions
 
-The [`AbsHumidity`](https://pkg.go.dev/github.com/cdzombak/libwx#AbsHumidity) type represents absolute humidity in grams per cubic meter (g/m³). A clamping [method](https://pkg.go.dev/github.com/cdzombak/libwx#AbsHumidity.Clamped) and [function](https://pkg.go.dev/github.com/cdzombak/libwx#ClampedAbsHumidity) for a reasonable atmospheric range (0-50 g/m³) are provided.
+The [`AbsHumidity`](https://pkg.go.dev/github.com/cdzombak/libwx#AbsHumidity) type represents absolute humidity in grams per cubic meter (g/m³).
 
 An [`Unwrap()`](https://pkg.go.dev/github.com/cdzombak/libwx#AbsHumidity.Unwrap) method also exists to get the raw value as a `float64`.
 

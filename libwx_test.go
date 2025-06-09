@@ -206,10 +206,4 @@ func Test_AbsHumidity_EdgeCases(t *testing.T) {
 
 	result = AbsHumidityFromRelC(TempC(110), RelHumidity(50))
 	r.Equal(AbsHumidity(0), result, "Should return 0 for temperature out of range")
-
-	ah := AbsHumidity(100).Clamped()
-	r.Equal(AbsHumidity(50), ah, "Should clamp to maximum")
-
-	ah = AbsHumidity(-5).Clamped()
-	r.Equal(AbsHumidity(0), ah, "Should clamp to minimum")
 }

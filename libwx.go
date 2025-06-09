@@ -347,8 +347,6 @@ func RelHumidityFromAbsF(temp TempF, ah AbsHumidity) RelHumidity {
 }
 
 func RelHumidityFromAbsC(temp TempC, ah AbsHumidity) RelHumidity {
-	ah = ah.Clamped()
-
 	pSat := saturationVaporPressureC(temp)
 	if pSat == 0 {
 		return 0
