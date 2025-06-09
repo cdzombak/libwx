@@ -23,3 +23,26 @@ func (rh RelHumidity) Clamped() RelHumidity {
 	}
 	return rh
 }
+
+
+type AbsHumidity float64
+
+func (ah AbsHumidity) Unwrap() float64 { return float64(ah) }
+
+// ClampedAbsHumidity returns an AbsHumidity from the given float64, guaranteed
+// to be within a reasonable range (0-50 g/m³).
+func ClampedAbsHumidity(ah float64) AbsHumidity {
+	return AbsHumidity(ah).Clamped()
+}
+
+// Clamped returns an absolute humidity guaranteed to be within
+// a reasonable atmospheric range (0-50 g/m³).
+func (ah AbsHumidity) Clamped() AbsHumidity {
+	if ah < 0 {
+		return 0
+	}
+	if ah > 50 {
+		return 50
+	}
+	return ah
+}

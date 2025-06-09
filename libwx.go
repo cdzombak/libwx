@@ -308,3 +308,61 @@ func WeightedStdDevDirectionDeg(degrees []Degree, weights []float64) (Degree, er
 	}
 	return radToDeg(circularStdDev(degToRadSlice(clampedDegSlice(degrees)), weights)), nil
 }
+
+
+func saturationVaporPressureC(temp TempC) float64 {
+	if temp.Unwrap() < -20 || temp.Unwrap() > 100 {
+		return 0
+	}
+	const (
+		A = 8.07131
+		B = 1730.63
+		C = 233.426
+	)
+	logP := A - B/(C+temp.Unwrap())
+	return math.Pow(10, logP)
+}
+
+func AbsHumidityFromRelF(temp TempF, rh RelHumidity) AbsHumidity {
+	return AbsHumidityFromRelC(temp.C(), rh)
+
+}
+
+func AbsHumidityFromRelC(temp TempC, rh RelHumidity) AbsHumidity {
+	rh = rh.Clamped()
+
+
+	pSat := saturationVaporPressureC(temp)
+	if pSat == 0 {
+		return 0
+	}
+
+	pSatPa := pSat * 133.322
+
+	tempK := temp.Unwrap() + 273.15
+	ah := (rh.UnwrapFloat64() / 100.0) * (pSatPa * 18.016) / (8.314 * tempK)
+
+	return AbsHumidity(ah)
+}
+
+func RelHumidityFromAbsF(temp TempF, ah AbsHumidity) RelHumidity {
+	return RelHumidityFromAbsC(temp.C(), ah)
+}
+
+
+func RelHumidityFromAbsC(temp TempC, ah AbsHumidity) RelHumidity {
+	ah = ah.Clamped()
+
+	pSat := saturationVaporPressureC(temp)
+
+	if pSat == 0 {
+		return 0
+	}
+
+	pSatPa := pSat * 133.322
+
+	tempK := temp.Unwrap() + 273.15
+	rh := (ah.Unwrap() * 8.314 * tempK) / (pSatPa * 18.016) * 100.0
+
+	return ClampedRelHumidity(int(rh + 0.5))
+}
