@@ -23,3 +23,7 @@ func (rh RelHumidity) Clamped() RelHumidity {
 	}
 	return rh
 }
+
+type AbsHumidity float64
+
+func (ah AbsHumidity) Unwrap() float64 { return float64(ah) }

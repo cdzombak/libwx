@@ -134,3 +134,76 @@ func Test_HeatIndexWarning_F(t *testing.T) {
 		r.Equal(c.expected, result, msgAndArgs...)
 	}
 }
+
+func Test_AbsHumidity_Conversions(t *testing.T) {
+	r := require.New(t)
+	eq := CurriedFloat64Equal(0.5)
+
+	cases := []struct {
+		tempC    TempC
+		rh       RelHumidity
+		expected AbsHumidity
+		desc     string
+	}{
+		{TempC(20), RelHumidity(50), AbsHumidity(8.7), "20°C, 50% RH - typical indoor conditions"},
+		{TempC(25), RelHumidity(60), AbsHumidity(13.8), "25°C, 60% RH - warm indoor conditions"},
+		{TempC(30), RelHumidity(70), AbsHumidity(21.1), "30°C, 70% RH - hot humid conditions"},
+		{TempC(10), RelHumidity(80), AbsHumidity(7.6), "10°C, 80% RH - cool humid conditions"},
+		{TempC(0), RelHumidity(90), AbsHumidity(4.3), "0°C, 90% RH - near freezing"},
+		{TempC(-10), RelHumidity(95), AbsHumidity(2.2), "-10°C, 95% RH - cold conditions"},
+	}
+
+	for _, c := range cases {
+		result := AbsHumidityFromRelC(c.tempC, c.rh)
+		msgAndArgs := []interface{}{
+			"AbsHumidityFromRelC: %s - given t %v + rh %v: expected %v g/m³, got %v g/m³",
+			c.desc, c.tempC, c.rh, c.expected, result,
+		}
+		r.True(eq(result.Unwrap(), c.expected.Unwrap()), msgAndArgs...)
+
+		resultRh := RelHumidityFromAbsC(c.tempC, c.expected)
+		msgAndArgsRh := []interface{}{
+			"RelHumidityFromAbsC: %s - given t %v + ah %v: expected %v%%, got %v%%",
+			c.desc, c.tempC, c.expected, c.rh, resultRh,
+		}
+		r.True(IntCompare(resultRh.Unwrap(), c.rh.Unwrap()) == 0 ||
+			IntCompare(resultRh.Unwrap(), c.rh.Unwrap()-1) == 0 ||
+			IntCompare(resultRh.Unwrap(), c.rh.Unwrap()+1) == 0, msgAndArgsRh...)
+	}
+}
+
+func Test_AbsHumidity_Fahrenheit(t *testing.T) {
+	r := require.New(t)
+	eq := CurriedFloat64Equal(0.5)
+
+	cases := []struct {
+		tempF TempF
+		tempC TempC
+		rh    RelHumidity
+	}{
+		{TempF(68), TempC(20), RelHumidity(50)},
+		{TempF(77), TempC(25), RelHumidity(60)},
+		{TempF(32), TempC(0), RelHumidity(90)},
+	}
+
+	for _, c := range cases {
+		resultF := AbsHumidityFromRelF(c.tempF, c.rh)
+		resultC := AbsHumidityFromRelC(c.tempC, c.rh)
+
+		msgAndArgs := []interface{}{
+			"Fahrenheit and Celsius should give same result: F=%v, C=%v, RH=%v - got F=%v, C=%v",
+			c.tempF, c.tempC, c.rh, resultF, resultC,
+		}
+		r.True(eq(resultF.Unwrap(), resultC.Unwrap()), msgAndArgs...)
+	}
+}
+
+func Test_AbsHumidity_EdgeCases(t *testing.T) {
+	r := require.New(t)
+
+	result := AbsHumidityFromRelC(TempC(-30), RelHumidity(50))
+	r.Equal(AbsHumidity(0), result, "Should return 0 for temperature out of range")
+
+	result = AbsHumidityFromRelC(TempC(110), RelHumidity(50))
+	r.Equal(AbsHumidity(0), result, "Should return 0 for temperature out of range")
+}

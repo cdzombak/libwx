@@ -82,11 +82,25 @@ The following distance types are provided:
 
 Each type provides methods to convert to the other types (e.g. [`NauticalMile.Meters()`](https://pkg.go.dev/github.com/cdzombak/libwx#NauticalMile.Meters)). An [`Unwrap()`](https://pkg.go.dev/github.com/cdzombak/libwx#NauticalMile.Unwrap) method also exists to get the raw value as a `float64`.
 
-### Humidity type
+### Humidity types
 
 The [`RelHumidity`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity) type is an integer type representing a relative humidity percentage from `0-100`, inclusive. A clamping [method](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity.Clamped) and [function](https://pkg.go.dev/github.com/cdzombak/libwx#ClampedRelHumidity) for this range are provided.
 
 An [`Unwrap()`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity.Unwrap) method also exists to get the raw value as an `int`; [`UnwrapFloat64()`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidity.UnwrapFloat64) returns the value as a `float64`.
+
+### Absolute humidity type and conversions
+
+The [`AbsHumidity`](https://pkg.go.dev/github.com/cdzombak/libwx#AbsHumidity) type represents absolute humidity in grams per cubic meter (g/m³).
+
+An [`Unwrap()`](https://pkg.go.dev/github.com/cdzombak/libwx#AbsHumidity.Unwrap) method also exists to get the raw value as a `float64`.
+
+#### Absolute and relative humidity conversions
+
+[`AbsHumidityFromRelF()`](https://pkg.go.dev/github.com/cdzombak/libwx#AbsHumidityFromRelF) and [`AbsHumidityFromRelC()`](https://pkg.go.dev/github.com/cdzombak/libwx#AbsHumidityFromRelC) calculate absolute humidity from relative humidity and temperature.
+
+[`RelHumidityFromAbsF()`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidityFromAbsF) and [`RelHumidityFromAbsC()`](https://pkg.go.dev/github.com/cdzombak/libwx#RelHumidityFromAbsC) calculate relative humidity from absolute humidity and temperature.
+
+These conversions use the Antoine equation for water vapor pressure and assume standard atmospheric pressure. The calculations are valid for temperatures from -20°C to 100°C (-4°F to 212°F).
 
 ### Pressure types and conversions
 
