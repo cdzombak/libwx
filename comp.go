@@ -30,7 +30,7 @@ func IntCompare(a, b int) int {
 }
 
 func Float64Equal(a, b, tolerance float64) bool {
-	return 0 == Float64Compare(a, b, tolerance)
+	return Float64Compare(a, b, tolerance) == 0
 }
 
 func CurriedFloat64Compare(tolerance float64) func(float64, float64) int {

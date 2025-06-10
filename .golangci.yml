@@ -1,0 +1,12 @@
+---
+version: "2"
+
+linters:
+  enable:
+    - govet
+  settings:
+    staticcheck:
+      checks: ["all", "-QF1005", "-ST1000"]
+
+run:
+  timeout: 5m
