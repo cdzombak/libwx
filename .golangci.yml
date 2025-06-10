@@ -2,14 +2,7 @@ version: "2"
 
 linters:
   enable:
-    - staticcheck
     - govet
-
-issues:
-  exclude-rules:
-    - linters:
-        - staticcheck
-      text: "QF1005:"
 
 run:
   timeout: 5m
