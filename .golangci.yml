@@ -5,5 +5,11 @@ linters:
     - staticcheck
     - govet
 
+issues:
+  exclude-rules:
+    - linters:
+        - staticcheck
+      text: "QF1005:"
+
 run:
   timeout: 5m
