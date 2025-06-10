@@ -192,11 +192,11 @@ func rawHeatIndex(c [9]float64, rawTemp, rawRelH float64) float64 {
 		c[1]*rawTemp +
 		c[2]*rawRelH +
 		c[3]*rawTemp*rawRelH +
-		c[4]*math.Pow(rawTemp, 2) +
-		c[5]*math.Pow(rawRelH, 2) +
-		c[6]*math.Pow(rawTemp, 2)*rawRelH +
-		c[7]*rawTemp*math.Pow(rawRelH, 2) +
-		c[8]*math.Pow(rawTemp, 2)*math.Pow(rawRelH, 2)
+		c[4]*rawTemp*rawTemp +
+		c[5]*rawRelH*rawRelH +
+		c[6]*rawTemp*rawTemp*rawRelH +
+		c[7]*rawTemp*rawRelH*rawRelH +
+		c[8]*rawTemp*rawTemp*rawRelH*rawRelH
 }
 
 // HeatIndexF is deprecated; use HeatIndexFWithValidation
