@@ -150,6 +150,106 @@ func WetBulbC(temp TempC, rh RelHumidity) (TempC, error) {
 		nil
 }
 
+const (
+	// MinWetBulbPressureMb is the minimum barometric pressure supported by
+	// WetBulbFAtPressure and WetBulbCAtPressure.
+	MinWetBulbPressureMb = PressureMb(585.0)
+
+	// MaxWetBulbPressureMb is the maximum barometric pressure supported by
+	// WetBulbFAtPressure and WetBulbCAtPressure.
+	MaxWetBulbPressureMb = PressureMb(1100.0)
+)
+
+// WetBulbFAtPressure calculates the wet bulb temperature (in Fahrenheit) given a
+// dry bulb temperature (in Fahrenheit), relative humidity percentage, and
+// barometric pressure (in millibars).
+// If the given temperature, relative humidity, or pressure are outside the
+// supported range, ErrInputRange is returned.
+// See: https://journals.ametsoc.org/view/journals/atot/30/8/jtech-d-12-00191_1.xml
+func WetBulbFAtPressure(temp TempF, rh RelHumidity, pressure PressureMb) (TempF, error) {
+	result, err := WetBulbCAtPressure(temp.C(), rh, pressure)
+	return result.F(), err
+}
+
+// WetBulbCAtPressure calculates the wet bulb temperature (in Celsius) given a
+// dry bulb temperature (in Celsius), relative humidity percentage, and
+// barometric pressure (in millibars).
+// The supported input ranges are -17 to 40 degrees C, 5-99% relative humidity,
+// and MinWetBulbPressureMb to MaxWetBulbPressureMb (inclusive); if the input is
+// outside these ranges, ErrInputRange is returned.
+// The formula is taken from "Direct Calculation of Thermodynamic Wet-Bulb
+// Temperature as a Function of Pressure and Elevation" (Sadeghi et al., Journal
+// of Atmospheric and Oceanic Technology, 2013). Its stated accuracy is within
+// 0.65 degrees C, with the largest errors occurring at high temperatures
+// combined with very low or very high relative humidity.
+// See: https://journals.ametsoc.org/view/journals/atot/30/8/jtech-d-12-00191_1.xml
+func WetBulbCAtPressure(temp TempC, rh RelHumidity, pressure PressureMb) (TempC, error) {
+	rh = rh.Clamped()
+	if rh.Unwrap() < 5 || rh.Unwrap() > 99 {
+		return temp, ErrInputRange
+	}
+	if temp.Unwrap() < -17 || temp.Unwrap() > 40 {
+		return temp, ErrInputRange
+	}
+	if pressure < MinWetBulbPressureMb || pressure > MaxWetBulbPressureMb {
+		return temp, ErrInputRange
+	}
+
+	// equation references below are to Sadeghi et al. 2013,
+	// https://journals.ametsoc.org/view/journals/atot/30/8/jtech-d-12-00191_1.xml
+	// named as in the paper: Ta is the dry bulb temperature, Pa the pressure.
+	// the paper's equations work in kPa; 1 millibar == 0.1 kPa
+	ta := temp.Unwrap()
+	pa := pressure.Unwrap() / 10.0
+
+	// thermodynamic psychrometric constant (degC**-1).
+	// the paper defines gamma = Cp/Lv, approximately 0.4 g_water/(kg_air * K);
+	// dividing by the 0.622 ratio of the molecular weights of water and dry air
+	// expresses it in terms of vapor pressure: 0.4e-3 / 0.622 == 6.43e-4.
+	// this agrees with the upper end of the 5.68e-4 to 6.42e-4 range of empirical
+	// estimates the paper cites, and yields gamma*Pa == 0.0650 kPa/degC at standard
+	// sea level pressure, close to the standard psychrometric constant of 0.0665.
+	const gamma = 6.42e-4
+
+	// saturated vapor pressure (kPa) at the dry bulb temperature, via the
+	// Magnus equation (equation 5a) with Buck 1981 coefficients (table 1).
+	// over the supported -17 to 40 degC range the two coefficient sets differ
+	// by at most 0.011 degC in the final result, so this branch cannot be
+	// meaningfully covered by a test; it is kept for fidelity to table 1.
+	b, c := 17.368, 238.88 // valid 0 to 50 degC
+	if ta < 0 {
+		b, c = 17.966, 247.15 // valid -40 to 0 degC
+	}
+	esTa := 0.611 * math.Exp(b*ta/(ta+c))
+	// ambient vapor pressure (kPa)
+	ea := esTa * rh.UnwrapFloat64() / 100.0
+
+	// lambda = 0.0014*exp(0.027*Ta) (equation 11)
+	lambda := 0.0014 * math.Exp(0.027*ta)
+	// zeta = -3e-7*Ta**3 - 1e-5*Ta**2 + 2e-5*Ta + 4.44e-2 (equation 12)
+	zeta := -3e-7*ta*ta*ta - 1e-5*ta*ta + 2e-5*ta + 4.44e-2
+	// phi = zeta + gamma*Pa (equation 9c)
+	phi := zeta + gamma*pa
+	// psi = a - gamma*Pa*Ta - ea, where a == 0.611 kPa (equation 9a)
+	psi := 0.611 - gamma*pa*ta - ea
+
+	// Tw = (-phi + sqrt(phi**2 - 4*lambda*psi)) / (2*lambda) (equations 8a/8b);
+	// the positive root is always the correct one (see discussion after equation 8b)
+	wetBulb := (-phi + math.Sqrt(phi*phi-4*lambda*psi)) / (2 * lambda)
+
+	// regression correction mapping the quadratic solution to the theoretical
+	// wet bulb temperature, from figure 3
+	if wetBulb < 0 {
+		wetBulb = 1.011*wetBulb + 0.0419
+	} else {
+		wetBulb = 1.0301*wetBulb - 0.213
+	}
+
+	// near saturation the figure 3 correction can push the result slightly
+	// above the dry bulb temperature, which is physically impossible
+	return TempC(math.Min(wetBulb, ta)), nil
+}
+
 func heatIndexConstantsF() [9]float64 {
 	// from https://en.wikipedia.org/wiki/Heat_index#Formula
 	// captured on 2024-07-17

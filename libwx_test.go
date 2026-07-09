@@ -1,6 +1,7 @@
 package libwx
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -50,6 +51,248 @@ func Test_WetBulb_C(t *testing.T) {
 		}
 		r.NoError(err, msgAndArgs...)
 		r.True(eq(result.Unwrap(), c.expected.Unwrap()), msgAndArgs...)
+	}
+}
+
+// wetBulbTheoreticalC solves the psychrometric equation (equation 4 of Sadeghi
+// et al. 2013) for the wet bulb temperature by bisection, using the same
+// saturated vapor pressure formula and psychrometric constant as
+// WetBulbCAtPressure. This is the "theoretical" solution that the paper's
+// direct formula approximates; it is used only to verify that approximation.
+func wetBulbTheoreticalC(ta float64, rh float64, pressureMb float64) float64 {
+	const gamma = 6.42e-4
+	es := func(t float64) float64 {
+		b, c := 17.368, 238.88
+		if t < 0 {
+			b, c = 17.966, 247.15
+		}
+		return 0.611 * math.Exp(b*t/(t+c))
+	}
+	pa := pressureMb / 10.0
+	ea := es(ta) * rh / 100.0
+	// ea - es(Tw) + gamma*Pa*(Ta - Tw) is strictly decreasing in Tw, and is
+	// non-negative at Tw == Ta, so the root lies in [-80, Ta]
+	lo, hi := -80.0, ta
+	for i := 0; i < 200; i++ {
+		mid := (lo + hi) / 2
+		if ea-es(mid)+gamma*pa*(ta-mid) > 0 {
+			lo = mid
+		} else {
+			hi = mid
+		}
+	}
+	return (lo + hi) / 2
+}
+
+func Test_WetBulbAtPressure_C(t *testing.T) {
+	r := require.New(t)
+	eq := CurriedFloat64Equal(Tolerance001)
+
+	// these are the values WetBulbCAtPressure is expected to produce, asserted
+	// tightly so that any change to the formula's coefficients is caught. That
+	// the formula is *correct* - that these values approximate the theoretical
+	// wet bulb temperature - is verified separately, by
+	// Test_WetBulbAtPressure_C_MatchesTheoreticalSolution.
+	cases := []struct {
+		t        TempC
+		rh       RelHumidity
+		p        PressureMb
+		expected TempC
+	}{
+		// standard sea level pressure, across the supported temperature range
+		{TempC(-15), RelHumidity(80), PressureMb(1013.25), TempC(-15.4413)},
+		{TempC(-10), RelHumidity(50), PressureMb(1013.25), TempC(-11.7208)},
+		{TempC(-5), RelHumidity(90), PressureMb(1013.25), TempC(-5.4503)},
+		{TempC(0), RelHumidity(50), PressureMb(1013.25), TempC(-2.8887)},
+		{TempC(5), RelHumidity(60), PressureMb(1013.25), TempC(1.9603)},
+		{TempC(10), RelHumidity(40), PressureMb(1013.25), TempC(4.4710)},
+		{TempC(15), RelHumidity(70), PressureMb(1013.25), TempC(12.0039)},
+		{TempC(20), RelHumidity(50), PressureMb(1013.25), TempC(13.8423)},
+		{TempC(25), RelHumidity(30), PressureMb(1013.25), TempC(14.4432)},
+		{TempC(30), RelHumidity(70), PressureMb(1013.25), TempC(25.6201)},
+		{TempC(35), RelHumidity(50), PressureMb(1013.25), TempC(25.9263)},
+		{TempC(40), RelHumidity(90), PressureMb(1013.25), TempC(38.4670)},
+		// relative humidity boundary values; at 99% the Tw <= Ta clamp binds
+		{TempC(20), RelHumidity(5), PressureMb(1013.25), TempC(6.7337)},
+		{TempC(20), RelHumidity(99), PressureMb(1013.25), TempC(20.0)},
+		// reduced pressures (roughly 1000/2000/3000/4500 m elevation)
+		{TempC(20), RelHumidity(50), PressureMb(899), TempC(13.5440)},
+		{TempC(20), RelHumidity(50), PressureMb(795), TempC(13.2451)},
+		{TempC(20), RelHumidity(50), PressureMb(703), TempC(12.9554)},
+		{TempC(20), RelHumidity(50), PressureMb(585), TempC(12.5426)},
+		{TempC(0), RelHumidity(70), PressureMb(703), TempC(-2.0988)},
+		{TempC(-10), RelHumidity(60), PressureMb(795), TempC(-11.6377)},
+		{TempC(30), RelHumidity(40), PressureMb(899), TempC(19.6323)},
+		{TempC(5), RelHumidity(90), PressureMb(585), TempC(4.0071)},
+		// above-standard sea level pressure
+		{TempC(15), RelHumidity(60), PressureMb(1040), TempC(10.9121)},
+		{TempC(25), RelHumidity(80), PressureMb(1040), TempC(22.6573)},
+		// pressure range bounds are inclusive
+		{TempC(20), RelHumidity(50), MaxWetBulbPressureMb, TempC(14.0506)},
+		{TempC(20), RelHumidity(50), MinWetBulbPressureMb, TempC(12.5426)},
+	}
+
+	for _, c := range cases {
+		result, err := WetBulbCAtPressure(c.t, c.rh, c.p)
+		msgAndArgs := []interface{}{
+			"given t %v + rh %v + p %v: expected %v, got %v",
+			c.t,
+			c.rh,
+			c.p,
+			c.expected,
+			result,
+		}
+		r.NoError(err, msgAndArgs...)
+		r.True(eq(result.Unwrap(), c.expected.Unwrap()), msgAndArgs...)
+		r.LessOrEqual(result.Unwrap(), c.t.Unwrap(), msgAndArgs...)
+	}
+}
+
+func Test_WetBulbAtPressure_C_MatchesTheoreticalSolution(t *testing.T) {
+	r := require.New(t)
+
+	// Sadeghi et al. 2013 claim their direct formula stays within 0.65 degC of
+	// the theoretical wet bulb temperature. Across the whole domain we accept,
+	// the largest deviation is 0.6703 degC, at the physically implausible corner
+	// of 40 degC at 585mb (~4500m elevation); the paper itself notes its largest
+	// errors occur at high temperature combined with very low relative humidity.
+	// Assert the slightly looser bound that actually holds everywhere.
+	const maxDeviationC = 0.7
+
+	for temp := -17; temp <= 40; temp++ {
+		for _, p := range []PressureMb{585, 703, 795, 899, 1013.25, 1100} {
+			for rh := 5; rh <= 99; rh++ {
+				result, err := WetBulbCAtPressure(TempC(temp), RelHumidity(rh), p)
+				r.NoError(err)
+				theoretical := wetBulbTheoreticalC(float64(temp), float64(rh), p.Unwrap())
+				r.InDelta(
+					theoretical, result.Unwrap(), maxDeviationC,
+					"given t %v + rh %v + p %v: theoretical %v, got %v",
+					temp, rh, p, theoretical, result,
+				)
+			}
+		}
+	}
+}
+
+func Test_WetBulbAtPressure_C_SeaLevelMatchesStull(t *testing.T) {
+	r := require.New(t)
+	eq := CurriedFloat64Equal(Tolerance0)
+
+	// the grid stops at 35 degC: Sadeghi et al. 2013 report their largest
+	// disagreement with the Stull formula at >= 39 degC, where the combined
+	// error of the two approximations exceeds 1 degC
+	for temp := -15; temp <= 35; temp += 5 {
+		for rh := 30; rh <= 95; rh += 5 {
+			stull, err := WetBulbC(TempC(temp), RelHumidity(rh))
+			if err != nil {
+				continue // outside the Stull formula's validity region
+			}
+			result, err := WetBulbCAtPressure(TempC(temp), RelHumidity(rh), PressureMb(1013.25))
+			msgAndArgs := []interface{}{
+				"given t %v + rh %v: WetBulbC %v, WetBulbCAtPressure %v",
+				temp,
+				rh,
+				stull,
+				result,
+			}
+			r.NoError(err, msgAndArgs...)
+			r.True(eq(result.Unwrap(), stull.Unwrap()), msgAndArgs...)
+		}
+	}
+}
+
+func Test_WetBulbAtPressure_C_PressureMonotonic(t *testing.T) {
+	r := require.New(t)
+
+	const (
+		dryBulb = TempC(25)
+		rh      = RelHumidity(60)
+		steps   = 100
+	)
+	minP, maxP := MinWetBulbPressureMb.Unwrap(), MaxWetBulbPressureMb.Unwrap()
+
+	prev, err := WetBulbCAtPressure(dryBulb, rh, MaxWetBulbPressureMb)
+	r.NoError(err)
+
+	// walk the full supported pressure range, ending exactly on
+	// MinWetBulbPressureMb so that both bounds are exercised
+	var p PressureMb
+	for i := 1; i <= steps; i++ {
+		p = PressureMb(maxP - (maxP-minP)*float64(i)/float64(steps))
+		result, err := WetBulbCAtPressure(dryBulb, rh, p)
+		r.NoError(err)
+		r.LessOrEqual(result.Unwrap(), prev.Unwrap(), "wet bulb temperature must not increase as pressure decreases (at %v mb)", p)
+		r.LessOrEqual(result.Unwrap(), dryBulb.Unwrap(), "wet bulb temperature must not exceed dry bulb temperature (at %v mb)", p)
+		prev = result
+	}
+	r.Equal(MinWetBulbPressureMb, p, "loop must finish at the minimum supported pressure")
+}
+
+func Test_WetBulbAtPressure_F(t *testing.T) {
+	r := require.New(t)
+	eq := CurriedFloat64Equal(Tolerance001)
+
+	cases := []struct {
+		t  TempF
+		rh RelHumidity
+		p  PressureMb
+	}{
+		{TempF(68), RelHumidity(50), PressureMb(1013.25)},
+		{TempF(14), RelHumidity(60), PressureMb(795)},
+		{TempF(95), RelHumidity(80), PressureMb(899)},
+	}
+
+	for _, c := range cases {
+		resultF, err := WetBulbFAtPressure(c.t, c.rh, c.p)
+		r.NoError(err)
+		resultC, err := WetBulbCAtPressure(c.t.C(), c.rh, c.p)
+		r.NoError(err)
+		r.True(
+			eq(resultF.Unwrap(), resultC.F().Unwrap()),
+			"given t %v + rh %v + p %v: expected %v, got %v",
+			c.t,
+			c.rh,
+			c.p,
+			resultC.F(),
+			resultF,
+		)
+	}
+}
+
+func Test_WetBulbAtPressure_InputRangeErrors(t *testing.T) {
+	r := require.New(t)
+
+	cases := []struct {
+		t  TempC
+		rh RelHumidity
+		p  PressureMb
+	}{
+		// relative humidity outside 5-99%
+		{TempC(20), RelHumidity(4), PressureMb(1013.25)},
+		{TempC(20), RelHumidity(100), PressureMb(1013.25)},
+		// temperature outside -17 to 40 degC
+		{TempC(-18), RelHumidity(50), PressureMb(1013.25)},
+		{TempC(41), RelHumidity(50), PressureMb(1013.25)},
+		// pressure outside MinWetBulbPressureMb to MaxWetBulbPressureMb
+		{TempC(20), RelHumidity(50), MinWetBulbPressureMb - 1},
+		{TempC(20), RelHumidity(50), MaxWetBulbPressureMb + 1},
+	}
+
+	for _, c := range cases {
+		result, err := WetBulbCAtPressure(c.t, c.rh, c.p)
+		msgAndArgs := []interface{}{
+			"given t %v + rh %v + p %v",
+			c.t,
+			c.rh,
+			c.p,
+		}
+		r.ErrorIs(err, ErrInputRange, msgAndArgs...)
+		r.Equal(c.t, result, msgAndArgs...)
+
+		resultF, err := WetBulbFAtPressure(c.t.F(), c.rh, c.p)
+		r.ErrorIs(err, ErrInputRange, msgAndArgs...)
+		r.InDelta(c.t.F().Unwrap(), resultF.Unwrap(), Tolerance001, msgAndArgs...)
 	}
 }
 

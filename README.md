@@ -38,6 +38,10 @@ The wind chill formula works given temperatures less than 50ºF and wind speeds 
 
 This formula is taken from ["Wet-Bulb Temperature from Relative Humidity and Air Temperature" (Roland Stull, Journal of Applied Meteorology and Climatology, 2011)](https://journals.ametsoc.org/view/journals/apme/50/11/jamc-d-11-0143.1.xml) and assumes standard sea level pressure.
 
+[`WetBulbFAtPressure()`](https://pkg.go.dev/github.com/cdzombak/libwx#WetBulbFAtPressure) and [`WetBulbCAtPressure()`](https://pkg.go.dev/github.com/cdzombak/libwx#WetBulbCAtPressure) additionally accept the barometric pressure (as [`PressureMb`](https://pkg.go.dev/github.com/cdzombak/libwx#PressureMb)), making them usable at elevations above sea level. This formula is taken from ["Direct Calculation of Thermodynamic Wet-Bulb Temperature as a Function of Pressure and Elevation" (Sadeghi et al., Journal of Atmospheric and Oceanic Technology, 2013)](https://journals.ametsoc.org/view/journals/atot/30/8/jtech-d-12-00191_1.xml).
+
+These functions accept temperatures from -17°C to 40°C, relative humidity from 5-99%, and pressures from 585 to 1100 millibars. The paper validates the formula over the first two ranges, but only for pressures between 585 millibars (its 4500 m elevation limit) and standard sea level pressure, 1013.25 millibars. Pressures above sea level are accepted so that ordinary high-pressure readings do not error; the formula is well-behaved there, but the paper does not validate it. The constants [`MinWetBulbPressureMb`](https://pkg.go.dev/github.com/cdzombak/libwx#MinWetBulbPressureMb) and [`MaxWetBulbPressureMb`](https://pkg.go.dev/github.com/cdzombak/libwx#MaxWetBulbPressureMb) are provided for clients who want to clamp pressure inputs to the accepted range.
+
 These functions return [`ErrInputRange`](https://pkg.go.dev/github.com/cdzombak/libwx#ErrInputRange) if the input is out of the formula's input range.
 
 ### Heat index calculation
